@@ -11,28 +11,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Synopsis of Analysis
 
-This analysis project uses National Weather Service storm data to compare injuries/fatalities and costs associated with storm damage by the type of storm that occurred (thunderstorm, flood, tornado, fire, etc.). The data are available from 1950 to 2011 though the data are less complete in earlier years. Also, the categories that are used to classify the storms are inconsistent, for example, with "TSTM WIND" and "THUNDERSTORM WIND" both indicating a thunderstorm wind.
+This analysis project uses National Weather Service storm data to compare injuries/fatalities and costs associated with storm damage by the type of storm that occurred (thunderstorm, flood, tornado, fire, etc.). The data are available from 1950 to 2011 though the data are less complete in earlier years. This analysis shows that tornadoes are the most dangerous type of storm and tornado/thunderstorm wind/hail are the most costly.
 
 ## Data Processing
 
-The instructions for this project warn that:
-*The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.*
-
-The following chart shows that the number of reported storms increasing over time. Unfortunately, there is no clear line between data that appear to be incomplete and all data.
-
-
+The categorization of the type of storm is critical to this analysis but unfortunately the values that are used to classify the storms are inconsistent, for example, with "TSTM WIND" and "THUNDERSTORM WIND" both indicating a thunderstorm wind. In order to be able to classify the storm type accurately I merged some types as shown in the code below.
 
 ```{r}
-
-# Turn off scientific notation
-options(scipen = 999)
 
 # Get data
 storms <- read.csv("repdata%2Fdata%2FStormData.csv.bz2")
 
 # Considering only storm types with more than 500 records, recode storm types that appear to be the same into the most common type.
-
-summary(storms$EVTYPE)
 
 storms$EVTYPE[storms$EVTYPE == "THUNDERSTORM WINDS" |
                       storms$EVTYPE == "TSTM WIND"] <- "THUNDERSTORM WIND"
@@ -49,23 +39,6 @@ storms$EVTYPE[storms$EVTYPE == "WINTER WEATHER"] <- "WINTER STORM"
 storms$EVTYPE[storms$EVTYPE == "WILD/FOREST FIRE"] <- "WILDFIRE"
 
 storms$EVTYPE[storms$EVTYPE == "HEAT"] <- "EXCESSIVE HEAT"
-
-summary(storms$EVTYPE)
-
-# Extract year from datetime
-# library(lubridate)
-# storms$year <- substr(mdy_hms(as.character(storms$BGN_DATE)), 1, 4)
-# storms$year
-# 
-# library(dplyr)
-# agg_year <- storms %>%
-#   group_by(year) %>%
-#   summarize(count_storms = n())
-# 
-# plot(agg_year$year, agg_year$count_storms,
-#      main = "Number of Storms by Year",
-#      xlab = "Year",
-#      ylab = "Number of Storms")
 
 ```
 
@@ -109,7 +82,7 @@ ggplot(data  = head(agg_fatalities, 10), aes(x = EVTYPE, y = count_fatalities)) 
 
 ### Across the United States, which types of events have the greatest economic consequences?
 
-The following chart shows the types of storms that cause the greatest damages in United States dollars. Only the top ten types are shown. Tornadoes/thunderstorm wind/hail his is by far the most costly.
+The following chart shows the types of storms that cause the greatest damages in United States dollars, including both property and crop damages. Only the top ten types are shown. Tornadoes/thunderstorm wind/hail his is by far the most costly.
 ```{r}
 
 # Damages are saved as thousands (K), millions (M), and billions (B). To put these all on the same scale, multiply values.
