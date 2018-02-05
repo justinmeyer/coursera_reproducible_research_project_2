@@ -24,6 +24,9 @@ The following chart shows that the number of reported storms increasing over tim
 
 ```{r}
 
+# Turn off scientific notation
+options(scipen = 999)
+
 # Get data
 storms <- read.csv("repdata%2Fdata%2FStormData.csv.bz2")
 
@@ -70,7 +73,7 @@ summary(storms$EVTYPE)
 
 ### Across the United States, which types of events are most harmful with respect to population health?
 
-Storms are placed in categories that describe the type of storm. Unfortunately these categories often overlap. For this analysis some categories were combined to get a more accurate picture of which storms are
+The following chart shows the types of storms that cause the greatest number of injuries. Only the top ten types are shown. Tornadoes are by far the most dangerous.
 
 ```{r}
 
@@ -80,12 +83,71 @@ agg_injuries <- storms %>%
   summarize(count_injuries = sum(INJURIES)) %>%
   arrange(desc(count_injuries))
 
-head(agg_injuries, 10)
-
 library(ggplot2)
 ggplot(data  = head(agg_injuries, 10), aes(x = EVTYPE, y = count_injuries)) +
   geom_bar(stat = "identity") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   labs(x = "Storm Type", y = "Number of Injuries", title = "Count of Injuries by Storm Type")
+
+```
+
+The following chart shows the types of storms that cause the greatest number of fatalities. Only the top ten types are shown. Tornadoes are again the most dangerous, followed by heat and flood.
+
+```{r}
+
+agg_fatalities <- storms %>%
+  group_by(EVTYPE) %>%
+  summarize(count_fatalities = sum(FATALITIES)) %>%
+  arrange(desc(count_fatalities))
+
+ggplot(data  = head(agg_fatalities, 10), aes(x = EVTYPE, y = count_fatalities)) +
+  geom_bar(stat = "identity") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Storm Type", y = "Number of Fatalities", title = "Count of Fatalities by Storm Type")
+
+```
+
+### Across the United States, which types of events have the greatest economic consequences?
+
+The following chart shows the types of storms that cause the greatest damages in United States dollars. Only the top ten types are shown. Tornadoes/thunderstorm wind/hail his is by far the most costly.
+```{r}
+
+# Damages are saved as thousands (K), millions (M), and billions (B). To put these all on the same scale, multiply values.
+
+storms$property_damage_new <- NA
+storms$property_damage_new[storms$PROPDMGEXP == "K" |
+                                   storms$PROPDMGEXP == "k"] <- storms$PROPDMG[storms$PROPDMGEXP == "K" |
+                                   storms$PROPDMGEXP == "k"] * 1000
+storms$property_damage_new[storms$PROPDMGEXP == "M" |
+                                   storms$PROPDMGEXP == "m"] <- storms$PROPDMG[storms$PROPDMGEXP == "M" |
+                                   storms$PROPDMGEXP == "m"] * 1000000
+storms$property_damage_new[storms$PROPDMGEXP == "B" |
+                                   storms$PROPDMGEXP == "b"] <- storms$PROPDMG[storms$PROPDMGEXP == "B" |
+                                   storms$PROPDMGEXP == "b"] * 1000000000
+
+storms$crop_damage_new <- NA
+storms$crop_damage_new[storms$CROPDMGEXP == "K" |
+                                   storms$CROPDMGEXP == "k"] <- storms$CROPDMG[storms$CROPDMGEXP == "K" |
+                                   storms$CROPDMGEXP == "k"] * 1000
+storms$crop_damage_new[storms$CROPDMGEXP == "M" |
+                                   storms$CROPDMGEXP == "m"] <- storms$CROPDMG[storms$CROPDMGEXP == "M" |
+                                   storms$CROPDMGEXP == "m"] * 1000000
+storms$crop_damage_new[storms$CROPDMGEXP == "B" |
+                                   storms$CROPDMGEXP == "b"] <- storms$CROPDMG[storms$CROPDMGEXP == "B" |
+                                   storms$CROPDMGEXP == "b"] * 1000000000
+
+storms$damage <- storms$property_damage_new + storms$crop_damage_new
+
+agg_damage <- storms %>%
+  group_by(EVTYPE) %>%
+  summarize(total_damage = sum(damage)) %>%
+  arrange(desc(total_damage))
+
+library(scales)
+ggplot(data  = head(agg_damage, 10), aes(x = EVTYPE, y = total_damage)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = comma) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Storm Type", y = "Damages in US Dollars", title = "Cost of Damages by Storm Type")
 
 ```
