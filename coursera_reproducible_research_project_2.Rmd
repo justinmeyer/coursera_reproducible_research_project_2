@@ -1,5 +1,5 @@
 ---
-title: "National Weather Service Storm Data Analysis"
+title: "National Weather Service Storm Data Dangers and Costs"
 author: "Justin Meyer"
 date: "February 5, 2018"
 output: html_document
@@ -9,8 +9,83 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Synopsis of Analysis
+
+This analysis project uses National Weather Service storm data to compare injuries/fatalities and costs associated with storm damage by the type of storm that occurred (thunderstorm, flood, tornado, fire, etc.). The data are available from 1950 to 2011 though the data are less complete in earlier years. Also, the categories that are used to classify the storms are inconsistent, for example, with "TSTM WIND" and "THUNDERSTORM WIND" both indicating a thunderstorm wind.
+
 ## Data Processing
 
+The instructions for this project warn that:
+*The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.*
+
+The following chart shows that the number of reported storms increasing over time. Unfortunately, there is no clear line between data that appear to be incomplete and all data.
+
+
+
+```{r}
+
+# Get data
+storms <- read.csv("repdata%2Fdata%2FStormData.csv.bz2")
+
+# Considering only storm types with more than 500 records, recode storm types that appear to be the same into the most common type.
+
+summary(storms$EVTYPE)
+
+storms$EVTYPE[storms$EVTYPE == "THUNDERSTORM WINDS" |
+                      storms$EVTYPE == "TSTM WIND"] <- "THUNDERSTORM WIND"
+
+storms$EVTYPE[storms$EVTYPE == "STRONG WIND" |
+                      storms$EVTYPE == "HIGH WINDS"] <- "HIGH WIND"
+
+storms$EVTYPE[storms$EVTYPE == "URBAN/SML STREAM FLD" |
+                      storms$EVTYPE == "FLASH FLOOD"|
+                      storms$EVTYPE == "FLOOD/FLASH FLOOD"] <- "FLOOD"
+
+storms$EVTYPE[storms$EVTYPE == "WINTER WEATHER"] <- "WINTER STORM"
+
+storms$EVTYPE[storms$EVTYPE == "WILD/FOREST FIRE"] <- "WILDFIRE"
+
+storms$EVTYPE[storms$EVTYPE == "HEAT"] <- "EXCESSIVE HEAT"
+
+summary(storms$EVTYPE)
+
+# Extract year from datetime
+# library(lubridate)
+# storms$year <- substr(mdy_hms(as.character(storms$BGN_DATE)), 1, 4)
+# storms$year
+# 
+# library(dplyr)
+# agg_year <- storms %>%
+#   group_by(year) %>%
+#   summarize(count_storms = n())
+# 
+# plot(agg_year$year, agg_year$count_storms,
+#      main = "Number of Storms by Year",
+#      xlab = "Year",
+#      ylab = "Number of Storms")
+
+```
 
 ## Results
 
+### Across the United States, which types of events are most harmful with respect to population health?
+
+Storms are placed in categories that describe the type of storm. Unfortunately these categories often overlap. For this analysis some categories were combined to get a more accurate picture of which storms are
+
+```{r}
+
+library(dplyr)
+agg_injuries <- storms %>%
+  group_by(EVTYPE) %>%
+  summarize(count_injuries = sum(INJURIES)) %>%
+  arrange(desc(count_injuries))
+
+head(agg_injuries, 10)
+
+library(ggplot2)
+ggplot(data  = head(agg_injuries, 10), aes(x = EVTYPE, y = count_injuries)) +
+  geom_bar(stat = "identity") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Storm Type", y = "Number of Injuries", title = "Count of Injuries by Storm Type")
+
+```
