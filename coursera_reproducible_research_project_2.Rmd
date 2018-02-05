@@ -6,12 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ## Synopsis of Analysis
 
-This analysis project uses National Weather Service storm data to compare injuries/fatalities and costs associated with storm damage by the type of storm that occurred (thunderstorm, flood, tornado, fire, etc.). The data are available from 1950 to 2011 though the data are less complete in earlier years. This analysis shows that tornadoes are the most dangerous type of storm and tornado/thunderstorm wind/hail are the most costly.
+This analysis project uses National Weather Service storm data to compare injuries/fatalities and costs associated with storm damage by the type of storm that occurred (thunderstorm, flood, tornado, fire, etc.). The data are available from 1950 to 2011 though the data are less complete in earlier years. This analysis shows that tornadoes are the most dangerous type of storm and the combined category of "tornado/thunderstorm wind/hail" is the most costly.
 
 ## Data Processing
 
@@ -50,12 +50,14 @@ The following chart shows the types of storms that cause the greatest number of 
 
 ```{r}
 
+# Aggregate injuries by storm type
 library(dplyr)
 agg_injuries <- storms %>%
   group_by(EVTYPE) %>%
   summarize(count_injuries = sum(INJURIES)) %>%
   arrange(desc(count_injuries))
 
+# Create chart
 library(ggplot2)
 ggplot(data  = head(agg_injuries, 10), aes(x = EVTYPE, y = count_injuries)) +
   geom_bar(stat = "identity") + 
@@ -68,11 +70,13 @@ The following chart shows the types of storms that cause the greatest number of 
 
 ```{r}
 
+# Aggregate fatalities by storm type
 agg_fatalities <- storms %>%
   group_by(EVTYPE) %>%
   summarize(count_fatalities = sum(FATALITIES)) %>%
   arrange(desc(count_fatalities))
 
+# Create chart
 ggplot(data  = head(agg_fatalities, 10), aes(x = EVTYPE, y = count_fatalities)) +
   geom_bar(stat = "identity") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -82,11 +86,10 @@ ggplot(data  = head(agg_fatalities, 10), aes(x = EVTYPE, y = count_fatalities)) 
 
 ### Across the United States, which types of events have the greatest economic consequences?
 
-The following chart shows the types of storms that cause the greatest damages in United States dollars, including both property and crop damages. Only the top ten types are shown. Tornadoes/thunderstorm wind/hail his is by far the most costly.
+The following chart shows the types of storms that cause the greatest damages in United States dollars, including both property and crop damages. Only the top ten types are shown. Tornadoes/thunderstorm wind/hail is by far the most costly.
 ```{r}
 
 # Damages are saved as thousands (K), millions (M), and billions (B). To put these all on the same scale, multiply values.
-
 storms$property_damage_new <- NA
 storms$property_damage_new[storms$PROPDMGEXP == "K" |
                                    storms$PROPDMGEXP == "k"] <- storms$PROPDMG[storms$PROPDMGEXP == "K" |
@@ -111,11 +114,13 @@ storms$crop_damage_new[storms$CROPDMGEXP == "B" |
 
 storms$damage <- storms$property_damage_new + storms$crop_damage_new
 
+# Aggregate damage by storm type
 agg_damage <- storms %>%
   group_by(EVTYPE) %>%
   summarize(total_damage = sum(damage)) %>%
   arrange(desc(total_damage))
 
+# Create chart
 library(scales)
 ggplot(data  = head(agg_damage, 10), aes(x = EVTYPE, y = total_damage)) +
   geom_bar(stat = "identity") +
